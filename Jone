@@ -1,0 +1,54 @@
+from kivy.app import App
+from kivy.uix.widget import Widget
+from kivy.graphics import Rectangle, Color
+from kivy.clock import Clock
+from kivy.core.window import Window
+from random import randint
+
+class Jogo(Widget):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.jogador = Rectangle(pos=(Window.width//2, 50), size=(50, 50))
+        self.obstaculos = []
+        self.velocidade = 5
+        self.contador_obstaculos = 0
+        
+        # Atualiza o jogo a cada 1/60 segundos
+        Clock.schedule_interval(self.atualizar, 1.0 / 60.0)
+
+        # Adiciona a tela ao fundo
+        with self.canvas:
+            Color(0, 0, 1)
+            self.fundo = Rectangle(pos=(0, 0), size=(Window.width, Window.height))
+
+    def atualizar(self, dt):
+        self.contador_obstaculos += 1
+        if self.contador_obstaculos % 30 == 0:
+            # Criar um novo obstáculo
+            x = randint(0, Window.width - 50)
+            y = Window.height
+            obstaculo = Rectangle(pos=(x, y), size=(50, 50))
+            self.obstaculos.append(obstaculo)
+
+        # Mover obstáculos
+        for obstaculo in self.obstaculos[:]:
+            obstaculo.pos = (obstaculo.pos[0], obstaculo.pos[1] - self.velocidade)
+            if obstaculo.pos[1] < 0:
+                self.obstaculos.remove(obstaculo)
+
+            # Verifica colisão
+            if self.jogador.collide_widget(obstaculo):
+                print("Você perdeu!")
+                self.stop()
+
+    def on_touch_move(self, touch):
+        # Mover o jogador com o dedo
+        if touch.x < Window.width - self.jogador.size[0]:
+            self.jogador.pos = (touch.x, self.jogador.pos[1])
+
+class JogoApp(App):
+    def build(self):
+        return Jogo()
+
+if __name__ == "__main__":
+    JogoApp().run()
